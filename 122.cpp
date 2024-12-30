@@ -1,8 +1,7 @@
 // beats 100%
 
-#include <algorithm>
 #include <execution>
-#include <vector>
+#include <numeric> // needed for transform_reduce
 using namespace std;
 
 class Solution
@@ -10,15 +9,16 @@ class Solution
   public:
     int maxProfit(vector<int> &prices)
     {
-        // make the derivative array as long as prices
-        vector<int> derivative(prices.size(), 0);
-        for (int i = 0; i < static_cast<int>(prices.size()) - 1; i++)
-        {
-            // compiler will optimize this
-            int diff = prices[i + 1] - prices[i];
-            derivative[i] = diff > 0 ? diff : 0;
-        }
-        // sum the derivative array in parallel
-        return (reduce(execution::par, derivative.begin(), derivative.end(), 0));
+        // Using transform_reduce to calculate the maximum profit from stock prices
+        // execution::par - Specifies parallel execution policy
+        // prices.begin() - Iterator to the beginning of the prices vector
+        // prices.end() - 1 - Iterator to the second last element of the prices vector
+        // prices.begin() + 1 - Iterator to the second element of the prices vector
+        // 0 - Initial value for the reduction
+        // plus<>() - Binary operation to sum up the results of the transformation
+        // [](int a, int b) { return max(0, b - a); } - Lambda function to calculate the profit for each pair of
+        // consecutive days. b - a if b > a, otherwise 0.
+        return transform_reduce(execution::par, prices.begin(), prices.end() - 1, prices.begin() + 1, 0, plus<>(),
+                                [](int a, int b) { return max(0, b - a); });
     }
 };
